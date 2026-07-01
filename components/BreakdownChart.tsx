@@ -63,10 +63,7 @@ export default function BreakdownChart({
           </Pie>
 
           <Tooltip
-            formatter={(value: number, name: string) => [
-              formatCurrency(value),
-              name,
-            ]}
+            formatter={(value, name) => [formatCurrency(Number(value)), name]}
             contentStyle={{
               borderRadius: "8px",
               border: "1px solid #e2e8f0",
