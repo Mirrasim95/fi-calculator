@@ -1,10 +1,22 @@
 "use client";
 
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 export default function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="w-24 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
+    );
+  }
 
   const isDark = resolvedTheme === "dark";
 
