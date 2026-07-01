@@ -76,8 +76,8 @@ export default function GrowthChart({ data, yearsToFI }: GrowthChartProps) {
           />
 
           <Tooltip
-            formatter={(value: number, name: string) => [
-              formatTooltipValue(value),
+            formatter={(value, name) => [
+              formatTooltipValue(Number(value)),
               name === "portfolioValue" ? "Portfolio" : "FI Target",
             ]}
             labelFormatter={(label) => `Year ${label}`}
