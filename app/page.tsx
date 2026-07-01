@@ -37,7 +37,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
-      {/* Header */}
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
@@ -52,10 +51,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column — Input */}
           <div className="lg:col-span-1 flex flex-col gap-6">
             <InputForm values={inputs} onChange={setInputs} />
             <MilestoneTracker
@@ -64,7 +61,6 @@ export default function Home() {
             />
           </div>
 
-          {/* Right column — Results */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             <ResultCard result={result} />
 

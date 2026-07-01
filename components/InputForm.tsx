@@ -27,7 +27,7 @@ const fields: FieldConfig[] = [
     min: 1,
     max: 100000,
     step: 100,
-    prefix: "$",
+    prefix: "₼",
   },
   {
     key: "monthlyExpenses",
@@ -35,7 +35,7 @@ const fields: FieldConfig[] = [
     min: 1,
     max: 100000,
     step: 100,
-    prefix: "$",
+    prefix: "₼",
   },
   {
     key: "currentSavings",
@@ -43,7 +43,7 @@ const fields: FieldConfig[] = [
     min: 0,
     max: 10000000,
     step: 1000,
-    prefix: "$",
+    prefix: "₼",
   },
   {
     key: "savingsRate",
