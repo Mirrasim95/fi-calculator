@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💰 FI Calculator
 
-## Getting Started
+A Financial Independence Calculator built with Next.js and TypeScript.
+Calculate how long it will take to reach financial independence based on your income, expenses and savings rate.
 
-First, run the development server:
+## 🔗 Live Demo
+
+[fi-calculator-five.vercel.app](https://fi-calculator-five.vercel.app)
+
+## 🛠 Tech Stack
+
+- **Next.js 16** — framework
+- **TypeScript** — type safety
+- **Tailwind CSS** — styling
+- **Zod** — form validation
+- **Recharts** — interactive charts
+- **next-themes** — dark/light mode
+- **clsx** — conditional classnames
+
+## ✨ Features
+
+- Real-time FI Number calculation (4% rule — 25x annual expenses)
+- Years to Financial Independence estimation
+- Portfolio growth line chart
+- Income breakdown pie chart
+- Scenario comparison (Conservative / Moderate / Aggressive)
+- Milestone tracker (25%, 50%, 75%, 100% of FI)
+- Dark / Light mode
+- Fully responsive (mobile & desktop)
+- AZN (₼) currency
+
+## 🚀 Getting Started
 
 ```bash
+git clone https://github.com/Mirrasim95/fi-calculator.git
+cd fi-calculator
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📐 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+├── app/
+│   ├── layout.tsx           # Root layout, ThemeProvider
+│   ├── page.tsx             # Main page
+│   └── globals.css          # Global styles
+├── components/
+│   ├── InputForm.tsx        # Form with Zod validation
+│   ├── ResultCard.tsx       # FI results display
+│   ├── GrowthChart.tsx      # Portfolio growth chart
+│   ├── BreakdownChart.tsx   # Income breakdown chart
+│   ├── ScenarioTable.tsx    # Scenario comparison
+│   ├── MilestoneTracker.tsx # Milestone progress
+│   └── ThemeToggle.tsx      # Dark/light toggle
+├── lib/
+│   ├── calcUtils.ts         # FI calculation logic
+│   └── schemas.ts           # Zod schemas
+├── data/
+│   └── mockData.ts          # Demo data
+└── types/
+    └── index.ts             # TypeScript interfaces
+```
 
-## Learn More
+## 📊 How It Works
 
-To learn more about Next.js, take a look at the following resources:
+Based on the **4% Safe Withdrawal Rate** (FIRE movement):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **FI Number** = Annual Expenses × 25
+- **Years to FI** = Compound growth calculation with monthly contributions
+- **Progress** = Current Savings / FI Number × 100
