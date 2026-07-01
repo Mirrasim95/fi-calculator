@@ -27,7 +27,7 @@ function formatYAxis(value: number): string {
 function formatTooltipValue(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "AZN",
     maximumFractionDigits: 0,
   }).format(value);
 }

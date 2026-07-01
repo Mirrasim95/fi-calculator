@@ -1,9 +1,9 @@
 import type { UserInputs } from "@/types";
 
 export const mockData: UserInputs = {
-  monthlyIncome: 5000,
-  monthlyExpenses: 3000,
+  monthlyIncome: 3000,
+  monthlyExpenses: 1800,
   savingsRate: 40,
   annualReturn: 7,
-  currentSavings: 15000,
+  currentSavings: 10000,
 };
