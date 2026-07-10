@@ -30,11 +30,39 @@ const fields: FieldConfig[] = [
 
 export default function InputForm({ values, onChange }: InputFormProps) {
   const [errors, setErrors] = useState<Partial<Record<keyof UserInputs, string>>>({})
-  const [focused, setFocused] = useState<Partial<Record<keyof UserInputs, boolean>>>({})
-  const [rawValues, setRawValues] = useState<Partial<Record<keyof UserInputs, string>>>({})
+  // raw string values — only used while typing
+  const [raw, setRaw] = useState<Partial<Record<keyof UserInputs, string>>>({})
+  const [focused, setFocused] = useState<keyof UserInputs | null>(null)
 
-  function validate(updated: UserInputs) {
+  function handleFocus(key: keyof UserInputs) {
+    setFocused(key)
+    setRaw((prev) => ({
+      ...prev,
+      [key]: values[key] === 0 ? "" : String(values[key]),
+    }))
+  }
+
+  function handleChange(key: keyof UserInputs, value: string) {
+    // just update raw string — don't call onChange yet
+    setRaw((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
+
+  function handleBlur(key: keyof UserInputs) {
+    setFocused(null)
+    const rawVal = raw[key]
+    const num = parseFloat(rawVal ?? "")
+
+    // if invalid or empty — restore previous value, show error
+    if (rawVal === "" || isNaN(num)) {
+      setRaw((prev) => ({ ...prev, [key]: String(values[key]) }))
+      setErrors((prev) => ({ ...prev, [key]: "Please enter a valid number" }))
+      return
+    }
+
+    const updated = { ...values, [key]: num }
     const result = userInputsSchema.safeParse(updated)
+
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof UserInputs, string>> = {}
       result.error.issues.forEach((issue) => {
@@ -42,54 +70,17 @@ export default function InputForm({ values, onChange }: InputFormProps) {
         if (!fieldErrors[field]) fieldErrors[field] = issue.message
       })
       setErrors(fieldErrors)
-    } else {
-      setErrors({})
-    }
-  }
-
-  function handleFocus(key: keyof UserInputs) {
-    setFocused((prev) => ({ ...prev, [key]: true }))
-    if (values[key] === 0) {
-      setRawValues((prev) => ({ ...prev, [key]: "" }))
-    } else {
-      setRawValues((prev) => ({ ...prev, [key]: String(values[key]) }))
-    }
-  }
-
-  function handleBlur(key: keyof UserInputs) {
-    setFocused((prev) => ({ ...prev, [key]: false }))
-    const raw = rawValues[key]
-
-    // if empty, zero or invalid → restore last valid value, don't call onChange
-    if (
-      raw === "" ||
-      raw === undefined ||
-      isNaN(Number(raw)) ||
-      Number(raw) === 0
-    ) {
-      setRawValues((prev) => ({ ...prev, [key]: String(values[key]) }))
+      // restore previous valid value
+      setRaw((prev) => ({ ...prev, [key]: String(values[key]) }))
       return
     }
-  }
 
-  function handleChange(key: keyof UserInputs, raw: string) {
-    setRawValues((prev) => ({ ...prev, [key]: raw }))
-
-    // don't process empty or incomplete input
-    if (raw === "" || raw === "-" || raw === "0") return
-
-    const num = parseFloat(raw)
-    if (isNaN(num)) return
-
-    const updated = { ...values, [key]: num }
-    validate(updated)
-    onChange(updated)
+    setErrors({})
+    onChange(updated) // only call onChange with valid value
   }
 
   function getDisplayValue(key: keyof UserInputs): string {
-    if (focused[key]) {
-      return rawValues[key] ?? String(values[key])
-    }
+    if (focused === key) return raw[key] ?? String(values[key])
     return String(values[key])
   }
 

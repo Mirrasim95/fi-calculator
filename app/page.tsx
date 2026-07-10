@@ -18,21 +18,36 @@ import ScenarioTable from "@/components/ScenarioTable";
 import MilestoneTracker from "@/components/MilestoneTracker";
 import ThemeToggle from "@/components/ThemeToggle";
 
+function isValidInputs(inputs: UserInputs): boolean {
+  return (
+    inputs.monthlyIncome > 0 &&
+    inputs.monthlyExpenses > 0 &&
+    inputs.savingsRate > 0 &&
+    inputs.annualReturn > 0 &&
+    inputs.monthlyExpenses < inputs.monthlyIncome
+  );
+}
+
 export default function Home() {
   const [inputs, setInputs] = useState<UserInputs>(mockData);
 
-  const result = useMemo(() => calculateFIResult(inputs), [inputs]);
-
-  const growthData = useMemo(
-    () => buildGrowthData(inputs, result.fiNumber, result.yearsToFI),
-    [inputs, result.fiNumber, result.yearsToFI],
+  const safeInputs = useMemo(
+    () => (isValidInputs(inputs) ? inputs : mockData),
+    [inputs]
   );
 
-  const scenarios = useMemo(() => buildScenarios(inputs), [inputs]);
+  const result = useMemo(() => calculateFIResult(safeInputs), [safeInputs]);
+
+  const growthData = useMemo(() => {
+    if (!isFinite(result.yearsToFI) || result.yearsToFI <= 0) return [];
+    return buildGrowthData(safeInputs, result.fiNumber, result.yearsToFI);
+  }, [safeInputs, result.fiNumber, result.yearsToFI]);
+
+  const scenarios = useMemo(() => buildScenarios(safeInputs), [safeInputs]);
 
   const milestones = useMemo(
     () => buildMilestones(inputs.currentSavings, result.fiNumber),
-    [inputs.currentSavings, result.fiNumber],
+    [inputs.currentSavings, result.fiNumber]
   );
 
   return (
@@ -67,7 +82,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <GrowthChart data={growthData} yearsToFI={result.yearsToFI} />
               <BreakdownChart
-                inputs={inputs}
+                inputs={safeInputs}
                 monthlySavings={result.monthlySavings}
               />
             </div>

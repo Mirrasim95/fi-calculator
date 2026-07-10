@@ -21,6 +21,7 @@ export function calculateMonthlySavings(
   return monthlyIncome * (savingsRate / 100);
 }
 
+// Uses logarithmic formula instead of loop — no OOM possible
 export function calculateYearsToFI(
   currentSavings: number,
   monthlySavings: number,
@@ -29,20 +30,25 @@ export function calculateYearsToFI(
 ): number {
   if (currentSavings >= fiNumber) return 0;
   if (monthlySavings <= 0) return Infinity;
-
-  const monthlyRate = annualReturn / 100 / 12;
-  let balance = currentSavings;
-  let months = 0;
-  const maxMonths = 600; // max 50 years
-
-  while (balance < fiNumber && months < maxMonths) {
-    balance = balance * (1 + monthlyRate) + monthlySavings;
-    months++;
-
-    if (!isFinite(balance) || balance <= 0) return Infinity;
+  if (annualReturn <= 0) {
+    // no return — simple division
+    const months = (fiNumber - currentSavings) / monthlySavings;
+    return Math.round((months / 12) * 10) / 10;
   }
 
-  if (months >= maxMonths) return Infinity;
+  const r = annualReturn / 100 / 12; // monthly rate
+  const numerator = Math.log(
+    (monthlySavings + fiNumber * r) / (monthlySavings + currentSavings * r)
+  );
+  const denominator = Math.log(1 + r);
+
+  if (denominator === 0 || !isFinite(numerator) || !isFinite(denominator)) {
+    return Infinity;
+  }
+
+  const months = numerator / denominator;
+
+  if (!isFinite(months) || months < 0) return Infinity;
 
   return Math.round((months / 12) * 10) / 10;
 }
@@ -88,7 +94,6 @@ export function buildGrowthData(
   fiNumber: number,
   yearsToFI: number,
 ): GrowthPoint[] {
-  // if yearsToFI is Infinity, return empty array — no chart
   if (!isFinite(yearsToFI) || yearsToFI <= 0) return [];
 
   const monthlyRate = inputs.annualReturn / 100 / 12;
@@ -97,7 +102,7 @@ export function buildGrowthData(
     inputs.savingsRate,
   );
 
-  const totalYears = Math.min(Math.ceil(yearsToFI) + 2, 52); // max 52 years
+  const totalYears = Math.min(Math.ceil(yearsToFI) + 2, 50);
   const points: GrowthPoint[] = [];
   let balance = inputs.currentSavings;
 
@@ -110,7 +115,7 @@ export function buildGrowthData(
 
     for (let m = 0; m < 12; m++) {
       balance = balance * (1 + monthlyRate) + monthlySavings;
-      if (!isFinite(balance)) break;
+      if (!isFinite(balance)) return points;
     }
   }
 
