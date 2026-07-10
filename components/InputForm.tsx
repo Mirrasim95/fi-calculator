@@ -1,90 +1,95 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { userInputsSchema } from "@/lib/schemas";
-import type { UserInputs } from "@/types";
-import clsx from "clsx";
+import { useState } from "react"
+import { userInputsSchema } from "@/lib/schemas"
+import type { UserInputs } from "@/types"
+import clsx from "clsx"
 
 interface InputFormProps {
-  values: UserInputs;
-  onChange: (values: UserInputs) => void;
+  values: UserInputs
+  onChange: (values: UserInputs) => void
 }
 
 interface FieldConfig {
-  key: keyof UserInputs;
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-  prefix?: string;
-  suffix?: string;
+  key: keyof UserInputs
+  min: number
+  max: number
+  step: number
+  label: string
+  prefix?: string
+  suffix?: string
 }
 
 const fields: FieldConfig[] = [
-  {
-    key: "monthlyIncome",
-    label: "Monthly Income",
-    min: 1,
-    max: 100000,
-    step: 100,
-    prefix: "₼",
-  },
-  {
-    key: "monthlyExpenses",
-    label: "Monthly Expenses",
-    min: 1,
-    max: 100000,
-    step: 100,
-    prefix: "₼",
-  },
-  {
-    key: "currentSavings",
-    label: "Current Savings",
-    min: 0,
-    max: 10000000,
-    step: 1000,
-    prefix: "₼",
-  },
-  {
-    key: "savingsRate",
-    label: "Savings Rate",
-    min: 1,
-    max: 100,
-    step: 1,
-    suffix: "%",
-  },
-  {
-    key: "annualReturn",
-    label: "Annual Return",
-    min: 0.1,
-    max: 30,
-    step: 0.1,
-    suffix: "%",
-  },
-];
+  { key: "monthlyIncome",   label: "Monthly Income",   min: 1,   max: 100000,   step: 100,  prefix: "₼" },
+  { key: "monthlyExpenses", label: "Monthly Expenses", min: 1,   max: 100000,   step: 100,  prefix: "₼" },
+  { key: "currentSavings",  label: "Current Savings",  min: 0,   max: 10000000, step: 1000, prefix: "₼" },
+  { key: "savingsRate",     label: "Savings Rate",     min: 1,   max: 100,      step: 1,    suffix: "%" },
+  { key: "annualReturn",    label: "Annual Return",    min: 0.1, max: 30,       step: 0.1,  suffix: "%" },
+]
 
 export default function InputForm({ values, onChange }: InputFormProps) {
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof UserInputs, string>>
-  >({});
+  const [errors, setErrors] = useState<Partial<Record<keyof UserInputs, string>>>({})
+  // track which fields are focused (show empty string instead of 0)
+  const [focused, setFocused] = useState<Partial<Record<keyof UserInputs, boolean>>>({})
+  // raw string values while typing
+  const [rawValues, setRawValues] = useState<Partial<Record<keyof UserInputs, string>>>({})
+
+  function handleFocus(key: keyof UserInputs) {
+    setFocused((prev) => ({ ...prev, [key]: true }))
+    // if value is 0, show empty string on focus
+    if (values[key] === 0) {
+      setRawValues((prev) => ({ ...prev, [key]: "" }))
+    } else {
+      setRawValues((prev) => ({ ...prev, [key]: String(values[key]) }))
+    }
+  }
+
+  function handleBlur(key: keyof UserInputs) {
+    setFocused((prev) => ({ ...prev, [key]: false }))
+    // on blur, if empty or NaN → fallback to 0
+    const raw = rawValues[key]
+    if (raw === "" || raw === undefined || isNaN(Number(raw))) {
+      setRawValues((prev) => ({ ...prev, [key]: "0" }))
+      const updated = { ...values, [key]: 0 }
+      validate(updated)
+      onChange(updated)
+    }
+  }
 
   function handleChange(key: keyof UserInputs, raw: string) {
-    const num = parseFloat(raw);
-    const updated = { ...values, [key]: isNaN(num) ? 0 : num };
+    setRawValues((prev) => ({ ...prev, [key]: raw }))
 
-    const result = userInputsSchema.safeParse(updated);
+    // allow empty string while typing (don't crash)
+    if (raw === "" || raw === "-") return
+
+    const num = parseFloat(raw)
+    if (isNaN(num)) return
+
+    const updated = { ...values, [key]: num }
+    validate(updated)
+    onChange(updated)
+  }
+
+  function validate(updated: UserInputs) {
+    const result = userInputsSchema.safeParse(updated)
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof UserInputs, string>> = {};
+      const fieldErrors: Partial<Record<keyof UserInputs, string>> = {}
       result.error.issues.forEach((issue) => {
-        const field = issue.path[0] as keyof UserInputs;
-        if (!fieldErrors[field]) fieldErrors[field] = issue.message;
-      });
-      setErrors(fieldErrors);
+        const field = issue.path[0] as keyof UserInputs
+        if (!fieldErrors[field]) fieldErrors[field] = issue.message
+      })
+      setErrors(fieldErrors)
     } else {
-      setErrors({});
+      setErrors({})
     }
+  }
 
-    onChange(updated);
+  function getDisplayValue(key: keyof UserInputs): string {
+    if (focused[key]) {
+      return rawValues[key] ?? String(values[key])
+    }
+    return String(values[key])
   }
 
   return (
@@ -95,7 +100,7 @@ export default function InputForm({ values, onChange }: InputFormProps) {
 
       <div className="flex flex-col gap-5">
         {fields.map(({ key, label, min, max, step, prefix, suffix }) => {
-          const error = errors[key];
+          const error = errors[key]
           return (
             <div key={key} className="flex flex-col gap-1">
               <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -110,10 +115,12 @@ export default function InputForm({ values, onChange }: InputFormProps) {
                 )}
                 <input
                   type="number"
-                  value={values[key]}
+                  value={getDisplayValue(key)}
                   min={min}
                   max={max}
                   step={step}
+                  onFocus={() => handleFocus(key)}
+                  onBlur={() => handleBlur(key)}
                   onChange={(e) => handleChange(key, e.target.value)}
                   className={clsx(
                     "w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors",
@@ -123,7 +130,7 @@ export default function InputForm({ values, onChange }: InputFormProps) {
                     suffix && "pr-8",
                     error
                       ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                      : "border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500",
+                      : "border-slate-200 dark:border-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   )}
                 />
                 {suffix && (
@@ -133,11 +140,13 @@ export default function InputForm({ values, onChange }: InputFormProps) {
                 )}
               </div>
 
-              {error && <p className="text-xs text-red-500">{error}</p>}
+              {error && (
+                <p className="text-xs text-red-500">{error}</p>
+              )}
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }
