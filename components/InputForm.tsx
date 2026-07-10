@@ -30,46 +30,8 @@ const fields: FieldConfig[] = [
 
 export default function InputForm({ values, onChange }: InputFormProps) {
   const [errors, setErrors] = useState<Partial<Record<keyof UserInputs, string>>>({})
-  // track which fields are focused (show empty string instead of 0)
   const [focused, setFocused] = useState<Partial<Record<keyof UserInputs, boolean>>>({})
-  // raw string values while typing
   const [rawValues, setRawValues] = useState<Partial<Record<keyof UserInputs, string>>>({})
-
-  function handleFocus(key: keyof UserInputs) {
-    setFocused((prev) => ({ ...prev, [key]: true }))
-    // if value is 0, show empty string on focus
-    if (values[key] === 0) {
-      setRawValues((prev) => ({ ...prev, [key]: "" }))
-    } else {
-      setRawValues((prev) => ({ ...prev, [key]: String(values[key]) }))
-    }
-  }
-
-  function handleBlur(key: keyof UserInputs) {
-    setFocused((prev) => ({ ...prev, [key]: false }))
-    // on blur, if empty or NaN → fallback to 0
-    const raw = rawValues[key]
-    if (raw === "" || raw === undefined || isNaN(Number(raw))) {
-      setRawValues((prev) => ({ ...prev, [key]: "0" }))
-      const updated = { ...values, [key]: 0 }
-      validate(updated)
-      onChange(updated)
-    }
-  }
-
-  function handleChange(key: keyof UserInputs, raw: string) {
-    setRawValues((prev) => ({ ...prev, [key]: raw }))
-
-    // allow empty string while typing (don't crash)
-    if (raw === "" || raw === "-") return
-
-    const num = parseFloat(raw)
-    if (isNaN(num)) return
-
-    const updated = { ...values, [key]: num }
-    validate(updated)
-    onChange(updated)
-  }
 
   function validate(updated: UserInputs) {
     const result = userInputsSchema.safeParse(updated)
@@ -83,6 +45,45 @@ export default function InputForm({ values, onChange }: InputFormProps) {
     } else {
       setErrors({})
     }
+  }
+
+  function handleFocus(key: keyof UserInputs) {
+    setFocused((prev) => ({ ...prev, [key]: true }))
+    if (values[key] === 0) {
+      setRawValues((prev) => ({ ...prev, [key]: "" }))
+    } else {
+      setRawValues((prev) => ({ ...prev, [key]: String(values[key]) }))
+    }
+  }
+
+  function handleBlur(key: keyof UserInputs) {
+    setFocused((prev) => ({ ...prev, [key]: false }))
+    const raw = rawValues[key]
+
+    // if empty, zero or invalid → restore last valid value, don't call onChange
+    if (
+      raw === "" ||
+      raw === undefined ||
+      isNaN(Number(raw)) ||
+      Number(raw) === 0
+    ) {
+      setRawValues((prev) => ({ ...prev, [key]: String(values[key]) }))
+      return
+    }
+  }
+
+  function handleChange(key: keyof UserInputs, raw: string) {
+    setRawValues((prev) => ({ ...prev, [key]: raw }))
+
+    // don't process empty or incomplete input
+    if (raw === "" || raw === "-" || raw === "0") return
+
+    const num = parseFloat(raw)
+    if (isNaN(num)) return
+
+    const updated = { ...values, [key]: num }
+    validate(updated)
+    onChange(updated)
   }
 
   function getDisplayValue(key: keyof UserInputs): string {

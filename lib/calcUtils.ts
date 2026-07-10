@@ -6,8 +6,8 @@ import type {
   Milestone,
 } from "@/types";
 
-const WITHDRAWAL_RATE = 0.04; // 4% rule
-const FI_MULTIPLIER = 1 / WITHDRAWAL_RATE; // 25x annual expenses
+const WITHDRAWAL_RATE = 0.04;
+const FI_MULTIPLIER = 1 / WITHDRAWAL_RATE;
 
 export function calculateFINumber(monthlyExpenses: number): number {
   const annualExpenses = monthlyExpenses * 12;
@@ -33,12 +33,16 @@ export function calculateYearsToFI(
   const monthlyRate = annualReturn / 100 / 12;
   let balance = currentSavings;
   let months = 0;
-  const maxMonths = 1200; // cap at 100 years to avoid infinite loop
+  const maxMonths = 600; // max 50 years
 
   while (balance < fiNumber && months < maxMonths) {
     balance = balance * (1 + monthlyRate) + monthlySavings;
     months++;
+
+    if (!isFinite(balance) || balance <= 0) return Infinity;
   }
+
+  if (months >= maxMonths) return Infinity;
 
   return Math.round((months / 12) * 10) / 10;
 }
@@ -84,13 +88,16 @@ export function buildGrowthData(
   fiNumber: number,
   yearsToFI: number,
 ): GrowthPoint[] {
+  // if yearsToFI is Infinity, return empty array — no chart
+  if (!isFinite(yearsToFI) || yearsToFI <= 0) return [];
+
   const monthlyRate = inputs.annualReturn / 100 / 12;
   const monthlySavings = calculateMonthlySavings(
     inputs.monthlyIncome,
     inputs.savingsRate,
   );
 
-  const totalYears = Math.max(Math.ceil(yearsToFI) + 2, 5);
+  const totalYears = Math.min(Math.ceil(yearsToFI) + 2, 52); // max 52 years
   const points: GrowthPoint[] = [];
   let balance = inputs.currentSavings;
 
@@ -101,9 +108,9 @@ export function buildGrowthData(
       fiNumber: Math.round(fiNumber),
     });
 
-    // compound for 12 months
     for (let m = 0; m < 12; m++) {
       balance = balance * (1 + monthlyRate) + monthlySavings;
+      if (!isFinite(balance)) break;
     }
   }
 
